@@ -1,14 +1,75 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html>
   <head>
     <title>Learn CLI</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #2e2e2e;
+        color: #e0e0e0;
+        font-family: "Courier New", Courier, monospace;
+        margin: 0;
+      }
+      #terminal {
+        width: 80%;
+        max-width: 800px;
+        background-color: #1e1e1e;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      }
+      #command-label {
+        margin-bottom: 5px;
+        color: #bdbdbd;
+      }
+      #output {
+        overflow-y: auto;
+        max-height: 400px;
+        margin-bottom: 10px;
+        white-space: pre-wrap;
+      }
+      #input-area {
+        display: flex;
+        align-items: left;
+        flex-direction: column;
+      }
+      #command {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: #2e2e2e;
+        color: #e0e0e0;
+        font-size: 16px;
+      }
+      #command:focus {
+        outline: none;
+      }
+      #execute {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        background-color: #007acc;
+        color: white;
+        margin-left: 10px;
+        cursor: pointer;
+      }
+      #execute:hover {
+        background-color: #005f99;
+      }
+    </style>
   </head>
   <body>
-    <h1>Learn CLI</h1>
-    <div id="output"></div>
-    <input type="text" id="command" placeholder="Type a command" />
-    <button onclick="executeCommand()">Execute</button>
+    <div id="terminal">
+      <div id="output"></div>
+      <div id="input-area">
+        <label id="command-label">Current directory:</label>
+        <input type="text" id="command" onkeypress="handleKeyPress(event)" />
+      </div>
+    </div>
 
     <script>
       const commandInput = document.getElementById("command");
@@ -16,14 +77,37 @@
 
       function executeCommand() {
         const command = commandInput.value;
+        if (command.trim() === "") return;
+
+        // Display the entered command in the output
+        appendOutput(`> ${command}`);
+
         window.api.send("execute-command", command);
+        commandInput.value = "";
+      }
+
+      function handleKeyPress(event) {
+        if (event.key === "Enter") {
+          executeCommand();
+        }
       }
 
       window.api.receive("command-output", (output) => {
-        const pre = document.createElement("pre");
-        pre.textContent = output;
-        outputDiv.appendChild(pre);
+        appendOutput(output);
       });
+
+      window.api.send("get-directory");
+      window.api.receive("update-cwd", (cwd) => {
+        const commandLabel = document.getElementById("command-label");
+        commandLabel.textContent = `Current directory: ${cwd}`;
+      });
+
+      function appendOutput(text) {
+        const pre = document.createElement("pre");
+        pre.textContent = text;
+        outputDiv.appendChild(pre);
+        outputDiv.scrollTop = outputDiv.scrollHeight;
+      }
     </script>
   </body>
 </html>
